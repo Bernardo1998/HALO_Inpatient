@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
-mimic_dir = "./"
+mimic_dir = "./data/"
 admissionFile = mimic_dir + "ADMISSIONS.csv"
 diagnosisFile = mimic_dir + "DIAGNOSES_ICD.csv"
 
@@ -20,6 +20,12 @@ diagnosisDf = diagnosisDf[['ICD9_CODE']]
 
 print("Building Dataset")
 data = {}
+printed = False
+########################
+# Each hadm_id is one step
+# check how many events in each step
+# and recored ICD codes
+#########################
 for row in tqdm(admissionDf.itertuples(), total=admissionDf.shape[0]):          
     #Extracting Admissions Table Info
     hadm_id = row.HADM_ID
@@ -36,7 +42,14 @@ for row in tqdm(admissionDf.itertuples(), total=admissionDf.shape[0]):
       data[subject_id] = {'visits': [diagnoses]}
     else:
       data[subject_id]['visits'].append(diagnoses)
+    if not printed:
+       print("Example data[subject_id]")
+       print(data[subject_id])
+       printed = True
 
+###################
+# Map these ICD codes to an index
+###################
 code_to_index = {}
 all_codes = list(set([c for p in data.values() for v in p['visits'] for c in v]))
 np.random.shuffle(all_codes)
@@ -45,6 +58,16 @@ for c in all_codes:
 print(f"VOCAB SIZE: {len(code_to_index)}")
 index_to_code = {v: k for k, v in code_to_index.items()}
 
+examples_code = all_codes[:10]
+print("example code to index:")
+for c in examples_code:
+   print(c, code_to_index[c])
+
+#####################
+# make a list of visits
+# each visit is a list of steps
+# each step is a list of event IDs in this step
+######################
 print("Converting Visits")
 for p in data:
     new_visits = []
@@ -60,6 +83,7 @@ for p in data:
 data = list(data.values())
 
 print("Adding Labels")
+# A mapping from diagnoses to disease group
 with open("hcup_ccs_2015_definitions_benchmark.yaml") as definitions_file:
     definitions = yaml.full_load(definitions_file)
 
@@ -78,6 +102,8 @@ id_to_group = sorted([k for k in definitions.keys() if definitions[k]['use_in_be
 group_to_id = dict((x, i) for (i, x) in enumerate(id_to_group))
 
 # Add Labels
+# Use disease groups as context columns
+printed = False
 for p in data:
   label = np.zeros(len(group_to_id))
   for v in p['visits']:
@@ -86,6 +112,10 @@ for p in data:
         label[group_to_id[code_to_group[c]]] = 1
   
   p['labels'] = label
+  if not printed:
+     print("Example labels!")
+     print(label)
+     printed = True
 
 print(f"MAX LEN: {max([len(p['visits']) for p in data])}")
 print(f"AVG LEN: {np.mean([len(p['visits']) for p in data])}")
@@ -101,9 +131,8 @@ train_dataset, val_dataset = train_test_split(train_dataset, test_size=0.1, rand
 
 # Save Everything
 print("Saving Everything")
-print(len(index_to_code))
-pickle.dump(code_to_index, open("./codeToIndex.pkl", "wb"))
-pickle.dump(index_to_code, open("./indexToCode.pkl", "wb"))
-pickle.dump(train_dataset, open("./trainDataset.pkl", "wb"))
-pickle.dump(val_dataset, open("./valDataset.pkl", "wb"))
-pickle.dump(test_dataset, open("./testDataset.pkl", "wb"))
+pickle.dump(code_to_index, open("./data/codeToIndex.pkl", "wb"))
+pickle.dump(index_to_code, open("./data/indexToCode.pkl", "wb"))
+pickle.dump(train_dataset, open("./data/trainDataset.pkl", "wb"))
+pickle.dump(val_dataset, open("./data/valDataset.pkl", "wb"))
+pickle.dump(test_dataset, open("./data/testDataset.pkl", "wb"))

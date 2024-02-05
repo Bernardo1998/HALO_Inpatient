@@ -11,7 +11,7 @@ SEED = 4
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
-config = HALOConfig()
+config = HALOConfig(total_vocab_size=2493,code_vocab_size=2488,label_vocab_size=2,n_ctx=13)
 
 local_rank = -1
 fp16 = False
@@ -27,8 +27,8 @@ else:
 if torch.cuda.is_available():
   torch.cuda.manual_seed_all(SEED)
 
-train_ehr_dataset = pickle.load(open('./data/trainDataset.pkl', 'rb'))
-val_ehr_dataset = pickle.load(open('./data/valDataset.pkl', 'rb'))
+train_ehr_dataset = pickle.load(open('./dvlog/acoustic/trainDataset.pkl', 'rb'))
+val_ehr_dataset = pickle.load(open('./dvlog/acoustic/valDataset.pkl', 'rb'))
 
 def get_batch(loc, batch_size, mode):
   # EHR data saved as [(P_1, L_1), (P_2, L_2), ... , (P_i, L_i)]
@@ -60,12 +60,12 @@ def get_batch(loc, batch_size, mode):
 
 def shuffle_training_data(train_ehr_dataset):
   np.random.shuffle(train_ehr_dataset)
-  
+
 model = HALOModel(config).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
-if os.path.exists("./save/halo_model"):
+if os.path.exists("./save/halo_model_acoustic"):
   print("Loading previous model")
-  checkpoint = torch.load('./save/halo_model', map_location=torch.device(device))
+  checkpoint = torch.load('./save/halo_model_acoustic', map_location=torch.device(device))
   model.load_state_dict(checkpoint['model'])
   optimizer.load_state_dict(checkpoint['optimizer'])
 
@@ -74,13 +74,12 @@ global_loss = 1e10
 for e in tqdm(range(config.epoch)):
   shuffle_training_data(train_ehr_dataset)
   for i in range(0, len(train_ehr_dataset), config.batch_size):
-    #print(f'{i}th iteration!')
     model.train()
     
     batch_ehr, batch_mask = get_batch(i, config.batch_size, 'train')
     batch_ehr = torch.tensor(batch_ehr, dtype=torch.float32).to(device)
     batch_mask = torch.tensor(batch_mask, dtype=torch.float32).to(device)
-    print("Shape of tensor:",batch_ehr.shape, batch_mask.shape)
+    #print("Shape of tensor:",batch_ehr.shape, batch_mask.shape)
     optimizer.zero_grad()
     loss, _, _ = model(batch_ehr, position_ids=None, ehr_labels=batch_ehr, ehr_masks=batch_mask, pos_loss_weight=config.pos_loss_weight)
     loss.backward()
@@ -89,8 +88,8 @@ for e in tqdm(range(config.epoch)):
     if i % (500*config.batch_size) == 0:
       print("Epoch %d, Iter %d: Training Loss:%.6f"%(e, i, loss * 8))
     if i % (500*config.batch_size) == 0:
-      if i == 0:
-        continue
+      #if i == 0:
+      #  continue
     
       model.eval()
       with torch.no_grad():
@@ -112,5 +111,5 @@ for e in tqdm(range(config.epoch)):
                 'optimizer': optimizer.state_dict(),
                 'iteration': i
             }
-          torch.save(state, './save/halo_model')
+          torch.save(state, './save/halo_model_acoustic')
           print('\n------------ Save best model ------------\n',flush=True)

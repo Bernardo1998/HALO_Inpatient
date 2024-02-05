@@ -7,7 +7,7 @@
 class HALOConfig(object):
     def __init__(
             self,
-            total_vocab_size=6869,
+            total_vocab_size=6984,
             code_vocab_size=6841,
             label_vocab_size=25,
             special_vocab_size=3,
@@ -20,7 +20,7 @@ class HALOConfig(object):
             initializer_range=0.02,
             batch_size=48,
             sample_batch_size=256,
-            epoch=50,
+            epoch=3,
             pos_loss_weight=None,
             lr=1e-4,
     ):
