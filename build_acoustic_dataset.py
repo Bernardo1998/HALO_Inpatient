@@ -15,8 +15,9 @@ new_df = pd.read_csv(acoustic_file)
 context_columns = ['gender', 'label']
 numerical_columns = [str(i) for i in range(25)]
 
+# Avoiding going over the GPT2 context limit
+new_df = new_df[new_df['timestamp'] < 1020] 
 new_df.drop(columns=['timestamp'],inplace=True)
-new_df = new_df.sample(1000)
 
 print("Building Dataset")
 # Step 1: Discretize numerical columns
@@ -53,7 +54,7 @@ for c in examples_code:
 print("Converting Visits")
 for p in data:
     new_visits = []
-    for v in data[p]['visits']:
+    for i,v in enumerate(data[p]['visits']):
         new_visit = []
         for c in v:
             new_visit.append(code_to_index[c])

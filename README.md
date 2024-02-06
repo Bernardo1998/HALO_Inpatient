@@ -3,21 +3,41 @@
 
 This is the source code for reproducing the inpatient dataset experiments found in the paper "Synthesizing Extremely High Dimensional Electronic Health Records."
 
+## Setup the environment:
+```
+pip install -r requirements.txt
+```
+
+## Converting the dvlog to suitable format
+
+First please create a "dvlog" folder and place "visual.csv" and acoustic.csv under it.
+
+```
+python build_acoustic_dataset.py
+python build_visual_dataset.py
+```
+
+Once completed, there should be two folders "acoustic" and "visual" under the "dvlog" folder.
+
+## Training a model
+
+First create a "save" folder, then run:
+
+```
+python train_model_acoustic.py
+python train_model_visual.py
+```
+
+Once completed, the trained models should be saved under /save. 
+
 ## Generating the Dataset
-This code interfaces with the pubilc MIMIC-III ICU stay database. Before using the code, you will need to apply, complete training, and download the ADMISSIONS and DIAGNOSES_ICD tables from <https://physionet.org>. From there, generate an empty directory `data/`, edit the `mimic_dir` variable in the file `build_dataset.py`, and run that file. It will generate all of the relevant data files.
 
-## Training a Model
-Next, a model can be training by creating an empt `save/` directory and running the `train_model.py` script.
+Generate synthetic dataset by:
 
-## Training Baseline Models
-Next, any desired baseline models may be trained by changing your working directory to `baselines/{baseline_model}` and running the corresponding `train_{baseline_model}.py` script
+```
 
-## Evaluating the Model(s)
-Finally, the trained model and its synthetic data may be evaluated. Before beginning, create the following directory paths:
-* `results/datasets`
-* `results/dataset_stats/plots`
-* `results/testing_stats`
-* `results/synthetic_training_stats`
-* `results/privacy_evaluations`
+python test_model_acoustic.py
+python test_model_visual.py
+```
 
-After these directories are created, first run the `test_model.py` script (along with any corresponding `test_{baseline_model}.py` in the directories from the previous section). This will generate perplexity, prediction, and synthetic dataset results. From there, you may run any other evaluation scripts (prefixed with evaluate_), making sure any references to unrun baseline models are commented out. All corresponding results will be printed and saved to pickle files.
+Once generation is completed, the synthetic dataset should be under results/acousticsets and results/visualsets in .pkl format. 

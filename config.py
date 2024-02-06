@@ -20,7 +20,7 @@ class HALOConfig(object):
             initializer_range=0.02,
             batch_size=48,
             sample_batch_size=256,
-            epoch=3,
+            epoch=50,
             pos_loss_weight=None,
             lr=1e-4,
     ):

@@ -11,7 +11,7 @@ SEED = 4
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
-config = HALOConfig(total_vocab_size=2493,code_vocab_size=2488,label_vocab_size=2,n_ctx=13)
+config = HALOConfig(total_vocab_size=2483,code_vocab_size=2475,label_vocab_size=2,n_positions=1024,n_ctx=1024,batch_size=4)
 
 local_rank = -1
 fp16 = False
@@ -63,6 +63,7 @@ def shuffle_training_data(train_ehr_dataset):
 
 model = HALOModel(config).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+os.makedirs("save",exist_ok=True)
 if os.path.exists("./save/halo_model_acoustic"):
   print("Loading previous model")
   checkpoint = torch.load('./save/halo_model_acoustic', map_location=torch.device(device))

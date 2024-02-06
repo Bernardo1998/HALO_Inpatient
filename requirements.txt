@@ -3,3 +3,5 @@ numpy
 pandas
 tqdm
 scikit-learn
+transformers
+torch

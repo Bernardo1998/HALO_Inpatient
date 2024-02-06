@@ -29,9 +29,9 @@ else:
 if torch.cuda.is_available():
  torch.cuda.manual_seed_all(SEED)
 
-train_ehr_dataset = pickle.load(open('./dvlog/acoustic/trainDataset.pkl', 'rb'))
-test_ehr_dataset = pickle.load(open('./dvlog/acoustic/testDataset.pkl', 'rb'))
-index_to_code = pickle.load(open("./dvlog/acoustic/indexToCode.pkl", "rb"))
+train_ehr_dataset = pickle.load(open('./dvlog/visual/trainDataset.pkl', 'rb'))
+test_ehr_dataset = pickle.load(open('./dvlog/visual/testDataset.pkl', 'rb'))
+index_to_code = pickle.load(open("./dvlog/visual/indexToCode.pkl", "rb"))
 #id_to_label = pickle.load(open("./dvlog/idToLabel.pkl", "rb"))
 train_c = set([c for p in train_ehr_dataset for v in p['visits'] for c in v])
 test_ehr_dataset = [{'labels': p['labels'], 'visits': [[c for c in v if c in train_c] for v in p['visits']]} for p in test_ehr_dataset]
@@ -75,7 +75,7 @@ def conf_mat(x, y):
 model = HALOModel(config).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
 
-checkpoint = torch.load('./save/halo_model_acoustic', map_location=torch.device(device))
+checkpoint = torch.load('./save/halo_model_visual', map_location=torch.device(device))
 model.load_state_dict(checkpoint['model'])
 optimizer.load_state_dict(checkpoint['optimizer'])
 
@@ -135,8 +135,8 @@ intermediate["Num Visits"] = n_visits
 intermediate["Num Positive Codes"] = n_pos_codes
 intermediate["Num Total Codes"] = n_total_codes
 os.makedirs("./results/", exist_ok=True)
-os.makedirs("./results/testing_stats/",exist_ok=True) # ./results/acousticsets/
-os.makedirs("./results/acousticsets/",exist_ok=True)
+os.makedirs("./results/testing_stats/",exist_ok=True) # ./results/visualsets/
+os.makedirs("./results/visualsets/",exist_ok=True)
 pickle.dump(intermediate, open("./results/testing_stats/HALO_intermediate_results.pkl", "wb"))
 
 #Extract, save, and display test metrics
@@ -234,4 +234,4 @@ for i in tqdm(range(0, 10, config.sample_batch_size)):
   batch_synthetic_ehrs = convert_ehr(batch_synthetic_ehrs)
   synthetic_ehr_dataset += batch_synthetic_ehrs
 
-pickle.dump(synthetic_ehr_dataset, open(f'./results/acousticsets/synthetichaloDataset.pkl', 'wb'))
+pickle.dump(synthetic_ehr_dataset, open(f'./results/visualsets/synthetichaloDataset.pkl', 'wb'))

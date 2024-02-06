@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import os
 
 dvlog_dir = "./dvlog/"
-visual_file = dvlog_dir + "visual_ctgan_test.csv"
+visual_file = dvlog_dir + "visual.csv"
 acoustic_file = dvlog_dir + "acoustic.csv"
 
 print("Loading CSVs Into Dataframes")
@@ -16,6 +16,8 @@ context_columns = ['gender', 'label']
 numerical_columns = [str(i) for i in range(136)]
 print(new_df.columns)
 
+# Avoiding going over the GPT2 context limit
+new_df = new_df[new_df['timestamp'] < 1020] 
 new_df.drop(columns=['timestamp'],inplace=True)
 #new_df = new_df.sample(1000)
 
@@ -54,7 +56,7 @@ for c in examples_code:
 print("Converting Visits")
 for p in data:
     new_visits = []
-    for v in data[p]['visits']:
+    for i,v in enumerate(data[p]['visits']):
         new_visit = []
         for c in v:
             new_visit.append(code_to_index[c])
@@ -68,9 +70,11 @@ data = list(data.values())
 
 print("Adding Labels")
 # Add Labels for gender and label
+new_data = []
 for i,p in enumerate(data):
   label = np.zeros(2)
   subject_id = unq_subject_id[i]
+  # Prevent very long sequences that GPT2 cannot handle
   subset = new_df[new_df['index'] == subject_id].reset_index()
   if subset['gender'][0] == 'm':
       label[0] = 1
@@ -78,18 +82,20 @@ for i,p in enumerate(data):
       label[1] = 1
   
   p['labels'] = label
+
+  new_data.append(p)
 print(f"LABEL SIZE: {2}")
 
-print(f"MAX LEN: {max([len(p['visits']) for p in data])}")
-print(f"AVG LEN: {np.mean([len(p['visits']) for p in data])}")
-print(f"MAX VISIT LEN: {max([len(v) for p in data for v in p['visits']])}")
-print(f"AVG VISIT LEN: {np.mean([len(v) for p in data for v in p['visits']])}")
-print(f"NUM RECORDS: {len(data)}")
+print(f"MAX LEN: {max([len(p['visits']) for p in new_data])}")
+print(f"AVG LEN: {np.mean([len(p['visits']) for p in new_data])}")
+print(f"MAX VISIT LEN: {max([len(v) for p in new_data for v in p['visits']])}")
+print(f"AVG VISIT LEN: {np.mean([len(v) for p in new_data for v in p['visits']])}")
+print(f"NUM RECORDS: {len(new_data)}")
 print(f"NUM LONGITUDINAL RECORDS: {len([p for p in data if len(p['visits']) > 1])}")
 
 # Train-Val-Test Split
 print("Splitting Datasets")
-train_dataset, test_dataset = train_test_split(data, test_size=0.2, random_state=4, shuffle=True)
+train_dataset, test_dataset = train_test_split(new_data, test_size=0.2, random_state=4, shuffle=True)
 train_dataset, val_dataset = train_test_split(train_dataset, test_size=0.1, random_state=4, shuffle=True)
 
 # Save Everything

@@ -11,7 +11,7 @@ SEED = 4
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
-config = HALOConfig(total_vocab_size=13605,code_vocab_size=13600,label_vocab_size=2,n_ctx=75)
+config = HALOConfig(total_vocab_size=13605,code_vocab_size=13600,label_vocab_size=2,n_positions=1024,n_ctx=1024,batch_size=4)
 
 local_rank = -1
 fp16 = False
